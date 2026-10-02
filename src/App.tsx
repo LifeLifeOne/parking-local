@@ -1,3 +1,4 @@
+import { FrenchDateInput, FrenchTimeInput } from "./FrenchInputs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { command, ask, desktop, pickFolder, pickBackup, pickPdf } from "./api";
@@ -42,6 +43,7 @@ export default function App() {
         .then(setInstallAvailable)
         .catch(() => {});
   }, []);
+  const [editorSession, setEditorSession] = useState(0);
   const dirty = useRef(false);
   dirty.current = editor !== null && JSON.stringify(editor) !== saved;
   const reload = useCallback(async () => {
@@ -134,6 +136,7 @@ export default function App() {
     if (busy) return;
     if (await leave()) {
       const next = structuredClone(b ?? newBooking(data?.today ?? localDate()));
+      setEditorSession((v) => v + 1);
       setEditor(next);
       setSaved(JSON.stringify(next));
       setError("");
@@ -276,6 +279,7 @@ export default function App() {
           </section>
         ) : editor ? (
           <BookingEditor
+            key={editorSession}
             booking={editor}
             setBooking={setEditor}
             data={data}
@@ -318,10 +322,9 @@ export default function App() {
                 <div className="toolbar">
                   <label className="date-label">
                     Feuille du{" "}
-                    <input
-                      type="date"
+                    <FrenchDateInput
                       value={date}
-                      onChange={(e) => setDate(e.target.value || data.today)}
+                      onChange={(value) => value && setDate(value)}
                     />
                   </label>
                   <div>
@@ -461,7 +464,7 @@ function EventList({
           </span>
           <span className="event-car">
             {e.vehicle}
-            <small>{e.plate}</small>
+            <small>{e.plate || "Plaque non renseignée"}</small>
           </span>
           <span aria-hidden="true">→</span>
         </button>
@@ -603,19 +606,18 @@ function BookingEditor({
           <div className="form-grid">
             <label>
               Date
-              <input
+              <FrenchDateInput
                 required
-                type="date"
+
                 value={current.date}
-                onChange={(e) => update({ date: e.target.value })}
+                onChange={(value) => update({ date: value })}
               />
             </label>
             <label>
-              Heure (facultative)
-              <input
-                type="time"
+              Heure (24 h, facultative)
+              <FrenchTimeInput
                 value={current.time ?? ""}
-                onChange={(e) => update({ time: e.target.value || null })}
+                onChange={(value) => update({ time: value || null })}
               />
             </label>
             <label className="full">
@@ -685,7 +687,7 @@ function BookingEditor({
               {field("name", "Nom du client", true)}
               {field("phone", "Téléphone", true)}
               {field("vehicle", "Véhicule (marque, modèle)", true)}
-              {field("plate", "Immatriculation", true)}
+              {field("plate", "Immatriculation (facultative)")}
             </div>
             {b.client_id && (
               <p className="hint">
@@ -698,39 +700,35 @@ function BookingEditor({
             <p>Sans heure, toute la journée est réservée par prudence.</p>
             <div className="form-grid">
               <label>
-                Date de dépôt
-                <input
+                Date de dépôt (JJ/MM/AAAA)
+                <FrenchDateInput
                   required
-                  type="date"
+
                   value={b.start_date}
-                  onChange={(e) => patch({ start_date: e.target.value })}
+                  onChange={(value) => patch({ start_date: value })}
                 />
               </label>
               <label>
-                Heure de dépôt
-                <input
-                  type="time"
+                Heure de dépôt (24 h)
+                <FrenchTimeInput
                   value={b.start_time ?? ""}
-                  onChange={(e) =>
-                    patch({ start_time: e.target.value || null })
-                  }
+                  onChange={(value) => patch({ start_time: value || null })}
                 />
               </label>
               <label>
-                Date de retrait
-                <input
+                Date de retrait (JJ/MM/AAAA)
+                <FrenchDateInput
                   required
-                  type="date"
+
                   value={b.end_date}
-                  onChange={(e) => patch({ end_date: e.target.value })}
+                  onChange={(value) => patch({ end_date: value })}
                 />
               </label>
               <label>
-                Heure de retrait
-                <input
-                  type="time"
+                Heure de retrait (24 h)
+                <FrenchTimeInput
                   value={b.end_time ?? ""}
-                  onChange={(e) => patch({ end_time: e.target.value || null })}
+                  onChange={(value) => patch({ end_time: value || null })}
                 />
               </label>
             </div>
@@ -1019,11 +1017,11 @@ function Planning({
           <button aria-label="Période précédente" onClick={() => shift(-1)}>
             ←
           </button>
-          <input
-            aria-label="Date du planning"
-            type="date"
+          <FrenchDateInput
+            ariaLabel="Date du planning"
+
             value={date}
-            onChange={(e) => setDate(e.target.value || data.today)}
+            onChange={(value) => value && setDate(value)}
           />
           <button aria-label="Période suivante" onClick={() => shift(1)}>
             →

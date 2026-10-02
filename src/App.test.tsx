@@ -106,7 +106,7 @@ describe("parcours du gestionnaire", () => {
       await screen.findByRole("button", { name: /Dépôt au parking/ }),
     );
     await user.click(screen.getByLabelText("Récupération au retour"));
-    fireEvent.change(screen.getByLabelText("Heure (facultative)"), {
+    fireEvent.change(screen.getByLabelText("Heure (24 h, facultative)"), {
       target: { value: "11:30" },
     });
     await user.click(
@@ -142,7 +142,11 @@ describe("parcours du gestionnaire", () => {
       "Capacité dépassée",
     );
     expect(
-      (screen.getByLabelText("Immatriculation") as HTMLInputElement).value,
+      (
+        screen.getByLabelText(
+          "Immatriculation (facultative)",
+        ) as HTMLInputElement
+      ).value,
     ).toBe("AB-123-CD");
   });
   it("refuse une saisie monétaire avec trois décimales", async () => {

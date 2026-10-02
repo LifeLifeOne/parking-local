@@ -17,6 +17,8 @@ Cette première version doit passer la recette graphique sur Windows et Omarchy 
 
 ## Développement
 
+Pendant la recette utilisateur, le workflow GitHub CI est temporairement désactivé. Les tests et les builds sont réalisés localement pour raccourcir les cycles de correction ; le workflow pourra être réactivé après cette phase.
+
 Architecture : React + TypeScript + Tauri 2 ; règles métier et stockage SQLite dans le crate Rust `core`. L’interface ne gère aucun fichier de données directement. Une seule instance peut être ouverte par utilisateur. Les données sont dans le dossier local utilisateur de l’identifiant `fr.parking-local.desktop`, séparées du programme.
 
 Prérequis développeur : Node 22.12+ ou 24, Rust stable et [les dépendances Tauri](https://v2.tauri.app/start/prerequisites/).

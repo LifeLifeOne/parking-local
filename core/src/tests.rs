@@ -247,3 +247,26 @@ fn pdf_multiple_pages_and_extension_guard() {
     let bytes = fs::read(file).unwrap();
     assert!(String::from_utf8_lossy(&bytes).contains("/Count 9"));
 }
+
+#[test]
+fn registration_is_optional_and_backups_remain_compatible() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut s = Store::open(dir.path()).unwrap();
+    let mut b = booking("2030-01-01", "2030-01-02");
+    b.plate.clear();
+    s.save(b).unwrap();
+    assert_eq!(s.bookings().unwrap()[0].plate, "");
+    s.backup_now().unwrap();
+    let copy = dir
+        .path()
+        .join("backups")
+        .join(format!("{}.sqlite", s.snapshot().unwrap().today));
+    assert!(s.prepare_restore(&copy).is_ok());
+    s.restore().unwrap();
+    assert_eq!(s.bookings().unwrap().len(), 1);
+    drop(s);
+    assert_eq!(
+        Store::open(dir.path()).unwrap().bookings().unwrap()[0].plate,
+        ""
+    );
+}

@@ -2,7 +2,7 @@
 
 ## Pendant un appel
 
-Cliquez sur « Nouvelle réservation ». Choisissez un client habituel ou renseignez ses coordonnées, son véhicule et sa plaque. Saisissez les dates et, si elles sont connues, les heures de dépôt et de retrait. Cliquez sur « Vérifier la disponibilité ». Le nombre de places restant après ce séjour s’affiche. En cas de dépassement, les périodes concernées sont indiquées.
+Cliquez sur « Nouvelle réservation ». Choisissez un client habituel ou renseignez ses coordonnées, son véhicule et, si vous la connaissez, sa plaque (facultative). Saisissez les dates au format JJ/MM/AAAA et, si elles sont connues, les heures de dépôt et de retrait au format 24 h (par exemple 18:30). Cliquez sur « Vérifier la disponibilité ». Le nombre de places restant après ce séjour s’affiche. En cas de dépassement, les périodes concernées sont indiquées.
 
 Ajoutez séparément l’accompagnement à l’aéroport et la récupération au retour, si nécessaires. Leurs horaires ne modifient pas l’occupation du parking. Saisissez le montant convenu, cochez « Montant payé » si applicable, puis enregistrez.
 
