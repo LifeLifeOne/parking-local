@@ -1,0 +1,8 @@
+node_modules/
+dist/
+target/
+core/target/
+src-tauri/target/
+*.sqlite*
+*.tmp
+release/

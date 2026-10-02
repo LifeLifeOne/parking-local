@@ -1,0 +1,1 @@
+{"bundle":{"targets":["nsis"],"windows":{"webviewInstallMode":{"type":"offlineInstaller"},"nsis":{"installMode":"currentUser","languages":["French"],"displayLanguageSelector":false,"installerHooks":"windows-hooks.nsh"}}}}
