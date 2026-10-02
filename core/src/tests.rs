@@ -249,13 +249,15 @@ fn pdf_multiple_pages_and_extension_guard() {
 }
 
 #[test]
-fn registration_is_optional_and_backups_remain_compatible() {
+fn vehicle_and_registration_are_optional_and_backups_remain_compatible() {
     let dir = tempfile::tempdir().unwrap();
     let mut s = Store::open(dir.path()).unwrap();
     let mut b = booking("2030-01-01", "2030-01-02");
     b.plate.clear();
+    b.vehicle.clear();
     s.save(b).unwrap();
     assert_eq!(s.bookings().unwrap()[0].plate, "");
+    assert_eq!(s.bookings().unwrap()[0].vehicle, "");
     s.backup_now().unwrap();
     let copy = dir
         .path()
@@ -266,7 +268,7 @@ fn registration_is_optional_and_backups_remain_compatible() {
     assert_eq!(s.bookings().unwrap().len(), 1);
     drop(s);
     assert_eq!(
-        Store::open(dir.path()).unwrap().bookings().unwrap()[0].plate,
+        Store::open(dir.path()).unwrap().bookings().unwrap()[0].vehicle,
         ""
     );
 }

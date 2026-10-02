@@ -73,7 +73,6 @@ fn compatible(c: &Connection) -> Result<()> {
         rules::interval(&b, Utc::now().timestamp())?;
         if b.name.trim().is_empty()
             || b.phone.trim().is_empty()
-            || b.vehicle.trim().is_empty()
             || !(0..=999999999).contains(&b.amount_cents)
         {
             return Err("Données de réservation invalides dans la sauvegarde.".into());
@@ -279,8 +278,8 @@ impl Store {
         b.name = b.name.trim().into();
         b.phone = b.phone.trim().into();
         b.plate = b.plate.trim().to_uppercase();
-        if b.name.is_empty() || b.phone.is_empty() || b.vehicle.trim().is_empty() {
-            return Err("Renseignez le client, le téléphone et le véhicule.".into());
+        if b.name.is_empty() || b.phone.is_empty() {
+            return Err("Renseignez le client et le téléphone.".into());
         }
         if b.amount_cents < 0 || b.amount_cents > 999999999 {
             return Err("Montant invalide.".into());

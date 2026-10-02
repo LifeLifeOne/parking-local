@@ -25,6 +25,11 @@ export function parseFrenchTime(text: string): string | null {
   if (!match || Number(match[1]) > 23 || Number(match[2]) > 59) return null;
   return `${match[1].padStart(2, "0")}:${match[2]}`;
 }
+export function formatTimeDraft(text: string): string {
+  const value = text.trim();
+  if (/^\d{3,4}$/.test(value)) return `${value.slice(0, 2)}:${value.slice(2)}`;
+  return parseFrenchTime(value) ?? text;
+}
 interface Props {
   value: string;
   onChange: (value: string) => void;
@@ -97,7 +102,7 @@ export function FrenchTimeInput({ value, onChange, ariaLabel }: Props) {
       maxLength={5}
       value={draft}
       onChange={(e) => {
-        const text = e.target.value;
+        const text = formatTimeDraft(e.target.value);
         setDraft(text);
         const time = parseFrenchTime(text);
         e.target.setCustomValidity(

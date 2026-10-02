@@ -1,3 +1,4 @@
+import userEvent from "@testing-library/user-event";
 // @vitest-environment jsdom
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
@@ -60,5 +61,20 @@ describe("dates et heures françaises", () => {
     fireEvent.blur(input);
     expect(input.value).toBe("19:05");
     expect(change).toHaveBeenLastCalledWith("19:05");
+  });
+  it("ajoute le séparateur pendant la frappe et permet de remplacer l’heure", async () => {
+    const user = userEvent.setup();
+    const change = vi.fn();
+    render(<FrenchTimeInput ariaLabel="Heure" value="" onChange={change} />);
+    const input = screen.getByLabelText("Heure") as HTMLInputElement;
+    await user.type(input, "1830");
+    expect(input.value).toBe("18:30");
+    expect(change).toHaveBeenLastCalledWith("18:30");
+    expect(input.checkValidity()).toBe(true);
+    await user.clear(input);
+    expect(change).toHaveBeenLastCalledWith("");
+    await user.type(input, "0735");
+    expect(input.value).toBe("07:35");
+    expect(change).toHaveBeenLastCalledWith("07:35");
   });
 });

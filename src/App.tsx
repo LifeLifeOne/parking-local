@@ -1,3 +1,4 @@
+import NavIcon from "./NavIcon";
 import { FrenchDateInput, FrenchTimeInput } from "./FrenchInputs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -181,18 +182,20 @@ export default function App() {
         <nav aria-label="Navigation principale">
           {(
             [
-              ["today", "Aujourd’hui", "◷"],
-              ["planning", "Planning", "▦"],
-              ["search", "Clients & séjours", "⌕"],
-              ["settings", "Réglages", "⚙"],
+              ["today", "Aujourd’hui"],
+              ["planning", "Planning"],
+              ["search", "Clients & séjours"],
+              ["settings", "Réglages"],
             ] as const
-          ).map(([id, label, icon]) => (
+          ).map(([id, label]) => (
             <button
               key={id}
               className={tab === id ? "selected" : ""}
               onClick={() => void navigate(id)}
             >
-              <span aria-hidden="true">{icon}</span>
+              <span aria-hidden="true">
+                <NavIcon section={id} />
+              </span>
               {label}
             </button>
           ))}
@@ -463,7 +466,7 @@ function EventList({
             <small>{e.phone}</small>
           </span>
           <span className="event-car">
-            {e.vehicle}
+            {e.vehicle || "Véhicule non renseigné"}
             <small>{e.plate || "Plaque non renseignée"}</small>
           </span>
           <span aria-hidden="true">→</span>
@@ -494,7 +497,7 @@ function BookingList({
           <button className="booking-details" onClick={() => void edit(b)}>
             <strong>{b.name}</strong>
             <span>
-              {b.vehicle} · {b.plate} · {b.phone}
+              {[b.vehicle, b.plate, b.phone].filter(Boolean).join(" · ")}
             </span>
             <small>
               {frenchDate(b.start_date)} {b.start_time ?? "horaire à préciser"}{" "}
@@ -686,7 +689,7 @@ function BookingEditor({
               </label>
               {field("name", "Nom du client", true)}
               {field("phone", "Téléphone", true)}
-              {field("vehicle", "Véhicule (marque, modèle)", true)}
+              {field("vehicle", "Véhicule (facultatif : marque, modèle)")}
               {field("plate", "Immatriculation (facultative)")}
             </div>
             {b.client_id && (
