@@ -111,7 +111,9 @@ pub fn export(day: &str, events: &[Appointment], path: &Path) -> Result<()> {
     );
     let temp = path.with_extension("pdf.tmp");
     fs::write(&temp, pdf).map_err(crate::err)?;
-    fs::File::open(&temp)
+    fs::OpenOptions::new()
+        .write(true)
+        .open(&temp)
         .map_err(crate::err)?
         .sync_all()
         .map_err(crate::err)?;

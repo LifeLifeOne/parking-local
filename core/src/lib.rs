@@ -105,7 +105,12 @@ fn consistent_copy(from: &Connection, path: &Path) -> Result<()> {
         .map_err(err)?;
     compatible(&to)?;
     to.close().map_err(|(_, e)| err(e))?;
-    fs::File::open(path).map_err(err)?.sync_all().map_err(err)
+    fs::OpenOptions::new()
+        .write(true)
+        .open(path)
+        .map_err(err)?
+        .sync_all()
+        .map_err(err)
 }
 // Windows rename does not replace files. Keep the previous valid file until the new one is in place.
 fn replace_file(temp: &Path, dest: &Path) -> Result<()> {
