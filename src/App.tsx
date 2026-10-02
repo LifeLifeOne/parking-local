@@ -105,13 +105,14 @@ export default function App() {
     };
   }, []);
   const run = async (fn: () => Promise<unknown>, message = "") => {
+    if (busy) return;
     setBusy(true);
     setError("");
     setNotice("");
     try {
-      await fn();
+      const result = await fn();
       await reload();
-      setNotice(message);
+      if (result !== false) setNotice(message);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -122,6 +123,7 @@ export default function App() {
     !dirty.current ||
     (await ask("Des modifications ne sont pas enregistrées. Les abandonner ?"));
   const navigate = async (next: Tab) => {
+    if (busy) return;
     if (await leave()) {
       setEditor(null);
       setTab(next);
@@ -129,6 +131,7 @@ export default function App() {
     }
   };
   const edit = async (b?: Booking) => {
+    if (busy) return;
     if (await leave()) {
       const next = structuredClone(b ?? newBooking(data?.today ?? localDate()));
       setEditor(next);
@@ -138,6 +141,7 @@ export default function App() {
     }
   };
   const close = async () => {
+    if (busy) return;
     if (await leave()) setEditor(null);
   };
   const presence = (b: Booking, arriving: boolean) =>
@@ -150,12 +154,13 @@ export default function App() {
         )
       ) {
         await command("presence", { id: b.id, arriving });
-      }
+      } else return false;
     }, "Présence mise à jour.");
   const pdf = () =>
     run(async () => {
       const path = await pickPdf(date);
       if (path) await command("export_pdf", { date, path });
+      else return false;
     }, "Feuille du jour enregistrée.");
   const cancelled =
     data?.bookings.filter(

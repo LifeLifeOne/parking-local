@@ -54,13 +54,47 @@ fn compatible(c: &Connection) -> Result<()> {
     c.prepare("SELECT b.id,b.client_id,b.vehicle_id,b.data,c.name,c.phone,v.plate FROM bookings b JOIN clients c ON c.id=b.client_id JOIN vehicles v ON v.id=b.vehicle_id").map_err(err)?;
     c.prepare("SELECT booking_id,kind,date,time,notes FROM appointments")
         .map_err(err)?;
-    let _: Settings = serde_json::from_str(
+    let settings: Settings = serde_json::from_str(
         &c.query_row::<String, _, _>("SELECT value FROM settings WHERE key='settings'", [], |r| {
             r.get(0)
         })
         .map_err(err)?,
     )
     .map_err(err)?;
+    if !(1..=100000).contains(&settings.capacity) {
+        return Err("Capacité invalide dans la sauvegarde.".into());
+    }
+    let mut statement = c.prepare("SELECT data FROM bookings").map_err(err)?;
+    for row in statement
+        .query_map([], |r| r.get::<_, String>(0))
+        .map_err(err)?
+    {
+        let b: Booking = serde_json::from_str(&row.map_err(err)?).map_err(err)?;
+        rules::interval(&b, Utc::now().timestamp())?;
+        if b.name.trim().is_empty()
+            || b.phone.trim().is_empty()
+            || b.vehicle.trim().is_empty()
+            || b.plate.trim().is_empty()
+            || !(0..=999999999).contains(&b.amount_cents)
+        {
+            return Err("Données de réservation invalides dans la sauvegarde.".into());
+        }
+        match b.status.as_str() {
+            "active" if b.actual_in.is_none() || b.actual_out.is_some() => {
+                return Err("Présence réelle invalide dans la sauvegarde.".into())
+            }
+            "completed" if b.actual_in.zip(b.actual_out).is_none_or(|(s, e)| s >= e) => {
+                return Err("Sortie réelle invalide dans la sauvegarde.".into())
+            }
+            _ => (),
+        }
+        for t in &b.transfers {
+            if !["outbound", "return"].contains(&t.kind.as_str()) {
+                return Err("Transfert invalide dans la sauvegarde.".into());
+            }
+            rules::timestamp(&t.date, t.time.as_deref(), false)?;
+        }
+    }
     Ok(())
 }
 fn consistent_copy(from: &Connection, path: &Path) -> Result<()> {
@@ -88,6 +122,13 @@ fn replace_file(temp: &Path, dest: &Path) -> Result<()> {
         }
         return Err(err(e));
     }
+    #[cfg(unix)]
+    if let Some(parent) = dest.parent() {
+        fs::File::open(parent)
+            .map_err(err)?
+            .sync_all()
+            .map_err(err)?;
+    }
     if old.exists() {
         fs::remove_file(old).map_err(err)?;
     }
@@ -97,6 +138,11 @@ impl Store {
     pub fn open(root: impl AsRef<Path>) -> Result<Self> {
         let root = root.as_ref().to_path_buf();
         fs::create_dir_all(root.join("backups")).map_err(err)?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&root, fs::Permissions::from_mode(0o700)).map_err(err)?;
+        }
         // Recover an interrupted daily backup replacement.
         for entry in fs::read_dir(root.join("backups")).map_err(err)? {
             let p = entry.map_err(err)?.path();
@@ -440,6 +486,12 @@ impl Store {
         )
     }
     pub fn export_pdf(&self, day: &str, path: &Path) -> Result<()> {
+        if !path
+            .extension()
+            .is_some_and(|e| e.eq_ignore_ascii_case("pdf"))
+        {
+            return Err("Choisissez un nom de fichier terminé par .pdf.".into());
+        }
         pdf::export(day, &self.day(day)?, path)
     }
     pub fn tick(&mut self, startup: bool) -> Result<()> {

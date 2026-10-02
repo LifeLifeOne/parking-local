@@ -222,3 +222,28 @@ fn daily_pdf_is_valid_multipage() {
     assert!(text.contains("06 12 34 56 78"));
     assert!(text.contains("/Count 1"));
 }
+
+#[test]
+fn pdf_multiple_pages_and_extension_guard() {
+    let dir = tempfile::tempdir().unwrap();
+    let s = Store::open(dir.path()).unwrap();
+    assert!(s
+        .export_pdf("2030-01-01", &dir.path().join("parking.sqlite"))
+        .is_err());
+    let event = Appointment {
+        booking_id: 1,
+        client_id: 1,
+        name: "Élodie".into(),
+        phone: "06 12 34".into(),
+        vehicle: "Clio".into(),
+        plate: "AB-123-CD".into(),
+        time: None,
+        action: "Dépôt".into(),
+        notes: "Terminal 2".into(),
+    };
+    let events = vec![event; 90];
+    let file = dir.path().join("many.pdf");
+    crate::pdf::export("2030-01-01", &events, &file).unwrap();
+    let bytes = fs::read(file).unwrap();
+    assert!(String::from_utf8_lossy(&bytes).contains("/Count 9"));
+}
