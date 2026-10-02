@@ -104,13 +104,22 @@ jobs:
           workspaces: src-tauri
       - name: Dépendances Linux
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xvfb dbus-x11
       - run: npm ci
       - name: Construire l’application et son installateur
         env:
           APPIMAGE_EXTRACT_AND_RUN: "1"
           NO_STRIP: "1"
         run: npm run tauri -- build --ci
+      - name: Essai réel de lancement Linux
+        if: runner.os == 'Linux'
+        run: |
+          appimage=$(find src-tauri/target/release/bundle/appimage -name '*.AppImage' -print -quit)
+          xvfb-run -a dbus-run-session -- bash scripts/smoke-linux.sh "$appimage"
+      - name: Installation Windows, raccourci et conservation des données
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/smoke-windows.ps1
       - name: Archive Linux avec permission de lancement
         if: runner.os == 'Linux'
         run: |
@@ -146,4 +155,11 @@ jobs:
           VERSION_TAG: ${{ github.ref_name }}
         run: |
           find installers -type f -exec sha256sum {} \; > installers/SHA256SUMS.txt
-          gh release create "$VERSION_TAG" $(find installers -type f) --verify-tag --title "Parking local $VERSION_TAG" --generate-notes
+          mapfile -d '' files < <(find installers -type f -print0)
+          if gh release view "$VERSION_TAG" >/dev/null 2>&1; then
+            gh release upload "$VERSION_TAG" "${files[@]}" --clobber
+          else
+            flags=()
+            if [[ "$VERSION_TAG" == *-* ]]; then flags+=(--prerelease); fi
+            gh release create "$VERSION_TAG" "${files[@]}" --verify-tag --title "Parking local $VERSION_TAG" --generate-notes "${flags[@]}"
+          fi
